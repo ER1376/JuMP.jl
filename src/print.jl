@@ -110,36 +110,33 @@ end
 #------------------------------------------------------------------------
 ## VariableRef
 #------------------------------------------------------------------------
-Base.show(io::IO, v::VariableRef) = print(io, var_str(REPLMode,v))
-Base.show(io::IO, ::MIME"text/latex", v::VariableRef) =
+Base.show(io::IO, v::AbstractVariableRef) = print(io, var_str(REPLMode,v))
+Base.show(io::IO, ::MIME"text/latex", v::AbstractVariableRef) =
     print(io, var_str(IJuliaMode,v,mathmode=false))
-function var_str(::Type{REPLMode}, v::VariableRef; mathmode=true)
-    name = MOI.get(v.m, MOI.VariableName(), v)
-    if name != ""
-        return name
+function var_str(::Type{REPLMode}, v::AbstractVariableRef; mathmode=true)
+    var_name = name(v)
+    if !isempty(var_name)
+        return var_name
     else
         return "noname"
     end
 end
-function var_str(::Type{IJuliaMode}, v::VariableRef; mathmode=true)
-    name = MOI.get(v.m, MOI.VariableName(), v)
-    if name != ""
+function var_str(::Type{IJuliaMode}, v::AbstractVariableRef; mathmode=true)
+    var_name = name(v)
+    if !isempty(var_name)
         # TODO: This is wrong if variable name constains extra "]"
-        return math(replace(replace(name,"[","_{",1),"]","}"), mathmode)
+        return math(replace(replace(var_name,"[","_{",1),"]","}"), mathmode)
     else
         return math("noname", mathmode)
     end
 end
 
 
-#------------------------------------------------------------------------
-## AffExpr  (not GenericAffExpr)
-#------------------------------------------------------------------------
-Base.show(io::IO, a::AffExpr) = print(io, aff_str(REPLMode,a))
-Base.show(io::IO, ::MIME"text/latex", a::AffExpr) =
+Base.show(io::IO, a::GenericAffExpr) = print(io, aff_str(REPLMode,a))
+Base.show(io::IO, ::MIME"text/latex", a::GenericAffExpr) =
     print(io, math(aff_str(IJuliaMode,a),false))
 # Generic string converter, called by mode-specific handlers
-function aff_str(mode, a::AffExpr, show_constant=true)
+function aff_str(mode, a::GenericAffExpr{C, V}, show_constant=true) where {C, V}
     # If the expression is empty, return the constant (or 0)
     if length(a.vars) == 0
         return show_constant ? str_round(a.constant) : "0"
@@ -148,11 +145,11 @@ function aff_str(mode, a::AffExpr, show_constant=true)
     # Do some work to combine duplicate coefficients, but otherwise respecting
     # the original ordering of the expression.
 
-    # Map from variable to index of first appearance in the AffExpr
-    idxmap = Dict{VariableRef,Int}()
+    # Map from variable to index of first appearance in the GenericAffExpr
+    idxmap = Dict{V,Int}()
 
-    # Map from variable to coefficient (duplicates summed) in the AffExpr
-    coefmap = Dict{VariableRef,Float64}()
+    # Map from variable to coefficient (duplicates summed) in the GenericAffExpr
+    coefmap = Dict{V,Float64}()
 
     for i in 1:length(a.vars)
         v = a.vars[i]
@@ -211,16 +208,16 @@ Base.show(io::IO, q::GenericQuadExpr) = print(io, quad_str(REPLMode,q))
 Base.show(io::IO, ::MIME"text/latex", q::GenericQuadExpr) =
     print(io, quad_str(IJuliaMode,q,mathmode=false))
 # Generic string converter, called by mode-specific handlers
-function quad_str(mode, q::GenericQuadExpr, sym)
+function quad_str(mode, q::GenericQuadExpr{C, V}, sym) where {C, V}
     length(q.qvars1) == 0 && return aff_str(mode,q.aff)
 
     # Map from unordered variable pair to index of first appearance in the QuadExpr
-    idxmap = Dict{Set{VariableRef},Int}()
+    idxmap = Dict{Set{V},Int}()
     # Map from unordered variable pair to ordered tuple of variables as first appeared in the QuadExpr
     # (to respect the order the user wrote the terms, e.g., x_1*x_2 vs x_2*x_1)
-    ordermap = Dict{Set{VariableRef},Tuple{VariableRef,VariableRef}}()
+    ordermap = Dict{Set{V},Tuple{V,V}}()
     # Map from unordered variable pair to coefficient (duplicates summed) in the Quadxpr
-    coefmap = Dict{Set{VariableRef},Float64}()
+    coefmap = Dict{Set{V},Float64}()
 
     for i in 1:length(q.qvars1)
         v1 = q.qvars1[i]
