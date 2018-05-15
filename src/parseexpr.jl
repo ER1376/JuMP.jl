@@ -26,7 +26,7 @@ end
 
 addtoexpr(ex::Number, c::Number, x::Number) = ex + c*x
 
-addtoexpr(ex::Number, c::Number, x::VariableRef) = AffExpr([x],[c],ex)
+addtoexpr(ex::Number, c::Number, x::AbstractVariableRef) = GenericAffExpr{Float64, typeof(x)}([x],[c],ex)
 
 function addtoexpr(ex::Number, c::Number, x::T) where T<:GenericAffExpr
     # It's only safe to mutate the first argument.
