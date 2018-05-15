@@ -55,7 +55,7 @@ function addtoexpr(ex::Number, c::Number, x::T) where T<:GenericQuadExpr
     end
 end
 
-addtoexpr(ex::Number, c::VariableRef, x::VariableRef) = QuadExpr([c],[x],[1.0],zero(AffExpr))
+addtoexpr(ex::Number, c::V, x::V) where V<:AbstractVariableRef = GenericQuadExpr([c],[x],[1.0],zero(GenericAffExpr{Float64,V}))
 
 function addtoexpr(ex::Number, c::T, x::T) where T<:GenericAffExpr
     q = c*x
