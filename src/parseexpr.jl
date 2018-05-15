@@ -281,7 +281,7 @@ addtoexpr_reorder(ex::Val{false}, args...) = (*)(args...)
 
 
 @generated function addtoexpr_reorder(ex, x, y)
-    if x <: Union{VariableRef,AffExpr} && y <: Number
+    if x <: Union{AbstractVariableRef,GenericAffExpr} && y <: Number
         :(addtoexpr(ex, y, x))
     else
         :(addtoexpr(ex, x, y))
@@ -291,7 +291,7 @@ end
 @generated function addtoexpr_reorder(ex, args...)
     n = length(args)
     @assert n ≥ 3
-    varidx = find(t -> (t == VariableRef || t == AffExpr), collect(args))
+    varidx = find(t -> (t <: AbstractVariableRef || t <: GenericAffExpr), collect(args))
     allscalar = all(t -> (t <: Number), args[setdiff(1:n, varidx)])
     idx = (allscalar && length(varidx) == 1) ? varidx[1] : n
     coef = Expr(:call, :*, [:(args[$i]) for i in setdiff(1:n,idx)]...)
