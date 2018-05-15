@@ -83,7 +83,7 @@ end
 
 # Alias for (Float64, VariableRef)
 const QuadExpr = GenericQuadExpr{Float64,VariableRef}
-Base.convert(::Type{GenericQuadExpr{C, V}}, v::Union{Real,VariableRef,GenericAffExpr}) where {C, V} = GenericQuadExpr(V[], V[], C[], GenericAffExpr{C, V}(v))
+Base.convert(::Type{GenericQuadExpr{C, V}}, v::Union{Real,V,GenericAffExpr}) where {C, V} = GenericQuadExpr(V[], V[], C[], GenericAffExpr{C, V}(v))
 GenericQuadExpr{C, V}() where {C, V} = zero(GenericQuadExpr{C, V})
 
 function MOI.ScalarQuadraticFunction(q::QuadExpr)
